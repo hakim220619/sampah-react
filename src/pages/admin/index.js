@@ -62,6 +62,7 @@ import FormHelperText from '@mui/material/FormHelperText'
 import toast from 'react-hot-toast'
 import Swal from 'sweetalert2'
 import withReactContent from 'sweetalert2-react-content'
+import url from 'src/configs/url'
 
 const MySwal = withReactContent(Swal)
 // ** Vars
@@ -171,18 +172,20 @@ const RowOptions = ({ id, fullName, email, role, state, phone, address }) => {
   const [values, setValues] = useState([])
   // const [role, setrole] = useState()
   //   console.log(role)
+
   useEffect(() => {
-    const storedToken = window.localStorage.getItem(authConfig.storageTokenKeyName)
+    const storedToken = window.localStorage.getItem('token')
     axios
-      .get('http://localhost:3000/api/role', {
+      .get('http://127.0.0.1:8000/api/getRole', {
         headers: {
-          Authorization: storedToken
+          Accept: 'application/json',
+          Authorization: 'Bearer ' + storedToken
         }
       })
-      .then(response => response.data.data)
+      .then(response => response.data)
       .then(val => setValues(val))
   }, [])
-  // console.log(defaultValues)
+  console.log(values)
   const {
     reset,
     control,

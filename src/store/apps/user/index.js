@@ -7,15 +7,15 @@ import url from 'src/configs/url'
 // ** Fetch Users
 export const fetchData = createAsyncThunk('appUsers/fetchData', async params => {
   const URL = await url()
+  const storedToken = window.localStorage.getItem('token')
   const customConfig = {
     params,
     headers: {
-      'Content-Type': 'application/json',
-      Authorization: process.env.NEXT_PUBLIC_JWT_SECRET
+      Accept: 'application/json',
+      Authorization: 'Bearer ' + storedToken
     }
   }
-  const response = await axios.get(URL + '/api/users', customConfig)
-  // console.log(response.data)
+  const response = await axios.get(URL + '/users', customConfig)
   return response.data
 })
 

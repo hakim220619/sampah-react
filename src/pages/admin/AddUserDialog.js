@@ -108,28 +108,28 @@ const AddDialogUsers = props => {
   const [village, setVillage] = useState()
 
   //   console.log(role)
-  useEffect(() => {
-    const storedToken = window.localStorage.getItem(authConfig.storageTokenKeyName)
-    axios
-      .get('/api/role', {
-        headers: {
-          Authorization: storedToken
-        }
-      })
-      .then(response => response.data.data)
-      .then(val => setValues(val))
-    axios
-      .get('/api/province', {
-        headers: {
-          Authorization: storedToken
-        }
-      })
-      .then(response => response.data.data)
-      .then(val => setValProvince(val))
-    // console.log(province)
-    // console.log(regency)
-    // console.log(changeRegency)
-  }, [])
+  // useEffect(() => {
+  //   const storedToken = window.localStorage.getItem('token')
+  //   axios
+  //     .get('/api/role', {
+  //       headers: {
+  //         Authorization: storedToken
+  //       }
+  //     })
+  //     .then(response => response.data.data)
+  //     .then(val => setValues(val))
+  //   axios
+  //     .get('/api/province', {
+  //       headers: {
+  //         Authorization: storedToken
+  //       }
+  //     })
+  //     .then(response => response.data.data)
+  //     .then(val => setValProvince(val))
+  //   // console.log(province)
+  //   // console.log(regency)
+  //   // console.log(changeRegency)
+  // }, [])
 
   const {
     reset,

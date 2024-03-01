@@ -36,7 +36,7 @@ const AuthProvider = ({ children }) => {
       // localStorage.removeItem('userData')
       // localStorage.removeItem('token')
       // localStorage.removeItem('accessToken')
-      console.log(storedToken)
+      // console.log(storedToken)
       const URL = await url()
       if (storedToken) {
         setLoading(true)
@@ -48,7 +48,7 @@ const AuthProvider = ({ children }) => {
             }
           })
           .then(async response => {
-            console.log(response)
+            // console.log(response)
             setLoading(false)
             setUser({ ...response.data.userData })
           })
