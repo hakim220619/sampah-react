@@ -1,12 +1,9 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit'
 
-// ** Axios Imports
-import axios from 'axios'
-import url from 'src/configs/url'
+import axiosConfig from 'src/configs/axiosConfig'
 
 // ** Fetch Users
 export const fetchData = createAsyncThunk('appUsers/fetchData', async params => {
-  const URL = await url()
   const storedToken = window.localStorage.getItem('token')
   const customConfig = {
     params,
@@ -15,7 +12,7 @@ export const fetchData = createAsyncThunk('appUsers/fetchData', async params => 
       Authorization: 'Bearer ' + storedToken
     }
   }
-  const response = await axios.get(URL + '/users', customConfig)
+  const response = await axiosConfig.get('/users', customConfig)
   return response.data
 })
 
@@ -29,14 +26,16 @@ export const editUser = createAsyncThunk('appUsers/addUser', async (data, { getS
 
 // ** Delete User
 export const deleteUser = createAsyncThunk('appUsers/deleteUser', async (id, { getState, dispatch }) => {
+  const storedToken = window.localStorage.getItem('token')
   const customConfig = {
-    data: id,
+    id: id,
     headers: {
-      'Content-Type': 'application/json',
-      Authorization: process.env.NEXT_PUBLIC_JWT_SECRET
+      Accept: 'application/json',
+      Authorization: 'Bearer ' + storedToken
     }
   }
-  const response = await axios.delete('/api/users', customConfig)
+  console.log(customConfig)
+  const response = await axiosConfig.delete('/users-delete/' + id, customConfig)
   dispatch(fetchData(getState().user.params))
 
   return response.data

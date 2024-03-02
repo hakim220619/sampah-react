@@ -62,7 +62,7 @@ import FormHelperText from '@mui/material/FormHelperText'
 import toast from 'react-hot-toast'
 import Swal from 'sweetalert2'
 import withReactContent from 'sweetalert2-react-content'
-import url from 'src/configs/url'
+import axiosConfig from 'src/configs/axiosConfig'
 
 const MySwal = withReactContent(Swal)
 // ** Vars
@@ -102,7 +102,7 @@ const LinkStyled = styled(Link)(({ theme }) => ({
   }
 }))
 
-const RowOptions = ({ id, fullName, email, role, state, phone, address }) => {
+const RowOptions = ({ id, fullName, email, role, state, phone, address, province, regency, district, village }) => {
   // ** Hooks
   const dispatch = useDispatch()
   // console.log(fullName)
@@ -118,7 +118,15 @@ const RowOptions = ({ id, fullName, email, role, state, phone, address }) => {
   const [stateEd, setState] = useState(state)
   const [phoneEd, setPhone] = useState(phone)
   const [addressEd, setAddress] = useState(address)
-
+  const [valuesProvince, setValProvince] = useState([])
+  const [provinceED, setProvince] = useState(province)
+  const [valuesRegency, setValRegency] = useState([])
+  const [regencyED, setRegency] = useState()
+  const [valuesDistrict, setValDistrict] = useState([])
+  const [districtED, setDistrict] = useState()
+  const [valuesVillage, setValVillage] = useState([])
+  const [villageED, setVillage] = useState()
+  const storedToken = window.localStorage.getItem('token')
   const handleRowOptionsClick = event => {
     setAnchorEl(event.currentTarget)
   }
@@ -138,6 +146,7 @@ const RowOptions = ({ id, fullName, email, role, state, phone, address }) => {
       confirmButtonText: 'Yes, delete it!'
     }).then(result => {
       if (result.isConfirmed) {
+        // console.log(id)
         dispatch(deleteUser(id))
         handleRowOptionsClose()
         toast.success('Successfully has been deleted.')
@@ -167,25 +176,17 @@ const RowOptions = ({ id, fullName, email, role, state, phone, address }) => {
     addressEd: address,
     fullNameEd: fullName,
     stateEd: state,
-    phone: Number(phone)
+    phone: Number(phone),
+    provinceED: province,
+    regencyED: regency,
+    districtED: district,
+    villageED: village
   }
   const [values, setValues] = useState([])
   // const [role, setrole] = useState()
   //   console.log(role)
 
-  useEffect(() => {
-    const storedToken = window.localStorage.getItem('token')
-    axios
-      .get('http://127.0.0.1:8000/api/getRole', {
-        headers: {
-          Accept: 'application/json',
-          Authorization: 'Bearer ' + storedToken
-        }
-      })
-      .then(response => response.data)
-      .then(val => setValues(val))
-  }, [])
-  console.log(values)
+  console.log(defaultValues)
   const {
     reset,
     control,
@@ -197,6 +198,63 @@ const RowOptions = ({ id, fullName, email, role, state, phone, address }) => {
     mode: 'onChange'
     // resolver: yupResolver(schema)
   })
+
+  useEffect(() => {
+    axiosConfig
+      .get('/getRole', {
+        headers: {
+          Accept: 'application/json',
+          Authorization: 'Bearer ' + storedToken
+        }
+      })
+      .then(response => {
+        setValues(response.data.data)
+      })
+    axiosConfig
+      .get('/getProvince', {
+        headers: {
+          Accept: 'application/json',
+          Authorization: 'Bearer ' + storedToken
+        }
+      })
+      .then(response => {
+        setValProvince(response.data.data)
+      })
+  }, [])
+
+  const onRegency = async id => {
+    axiosConfig
+      .get('/getRegency/' + id, {
+        headers: {
+          Accept: 'application/json',
+          Authorization: 'Bearer ' + storedToken
+        }
+      })
+      .then(response => response.data.data)
+      .then(val => setValRegency(val))
+  }
+  const onDistrict = async id => {
+    axiosConfig
+      .get('/getDistrict/' + id, {
+        headers: {
+          Accept: 'application/json',
+          Authorization: 'Bearer ' + storedToken
+        }
+      })
+      .then(response => response.data.data)
+      .then(val => setValDistrict(val))
+  }
+  const onVillage = async id => {
+    axiosConfig
+      .get('/getVillage/' + id, {
+        headers: {
+          Accept: 'application/json',
+          Authorization: 'Bearer ' + storedToken
+        }
+      })
+      .then(response => response.data.data)
+      .then(val => setValVillage(val))
+  }
 
   const onSubmit = async () => {
     const customConfig = {
@@ -334,6 +392,92 @@ const RowOptions = ({ id, fullName, email, role, state, phone, address }) => {
                     >
                       <MenuItem value='ON'>ON</MenuItem>
                       <MenuItem value='OFF'>OFF</MenuItem>
+                    </Select>
+                  </FormControl>
+                </Grid>
+                <Grid item sm={6} xs={12}>
+                  <FormControl fullWidth sx={{ mb: 6 }}>
+                    <InputLabel id='role-select'>Select Province</InputLabel>
+                    <Select
+                      fullWidth
+                      value={provinceED}
+                      id='select-province'
+                      label='Select Province'
+                      labelId='Province-select'
+                      onChange={e => {
+                        onRegency(e.target.value), setProvince(e.target.value)
+                      }}
+                      inputProps={{ placeholder: 'Select Province' }}
+                    >
+                      {valuesProvince.map((opts, i) => (
+                        <MenuItem key={i} value={opts.id}>
+                          {opts.nama}
+                        </MenuItem>
+                      ))}
+                    </Select>
+                  </FormControl>
+                </Grid>
+                <Grid item sm={6} xs={12}>
+                  <FormControl fullWidth sx={{ mb: 6 }}>
+                    <InputLabel id='role-select'>Select Regency</InputLabel>
+                    <Select
+                      fullWidth
+                      value={regencyED}
+                      id='select-regency'
+                      label='Select Regency'
+                      labelId='Regency-select'
+                      onChange={e => {
+                        setRegency(e.target.value), onDistrict(e.target.value)
+                      }}
+                      inputProps={{ placeholder: 'Select Regency' }}
+                    >
+                      {valuesRegency.map((opts, i) => (
+                        <MenuItem key={i} value={opts.id}>
+                          {opts.nama}
+                        </MenuItem>
+                      ))}
+                    </Select>
+                  </FormControl>
+                </Grid>
+                <Grid item sm={6} xs={12}>
+                  <FormControl fullWidth sx={{ mb: 6 }}>
+                    <InputLabel id='role-select'>Select District</InputLabel>
+                    <Select
+                      fullWidth
+                      value={districtED}
+                      id='select-district'
+                      label='Select District'
+                      labelId='District-select'
+                      onChange={e => {
+                        setDistrict(e.target.value), onVillage(e.target.value)
+                      }}
+                      inputProps={{ placeholder: 'Select District' }}
+                    >
+                      {valuesDistrict.map((opts, i) => (
+                        <MenuItem key={i} value={opts.id}>
+                          {opts.nama}
+                        </MenuItem>
+                      ))}
+                    </Select>
+                  </FormControl>
+                </Grid>
+                <Grid item sm={6} xs={12}>
+                  <FormControl fullWidth sx={{ mb: 6 }}>
+                    <InputLabel id='role-select'>Select Village</InputLabel>
+                    <Select
+                      fullWidth
+                      value={villageED}
+                      id='select-village'
+                      label='Select Village'
+                      labelId='Village-select'
+                      onChange={e => setVillage(e.target.value)}
+                      inputProps={{ placeholder: 'Select Village' }}
+                    >
+                      {valuesVillage.map((opts, i) => (
+                        <MenuItem key={i} value={opts.id}>
+                          {opts.nama}
+                        </MenuItem>
+                      ))}
                     </Select>
                   </FormControl>
                 </Grid>
@@ -510,6 +654,10 @@ const columns = [
         state={row.state}
         phone={row.phone}
         address={row.address}
+        province={row.provinceId}
+        regency={row.regencyId}
+        district={row.districtId}
+        village={row.villageId}
       />
     )
   }
@@ -522,7 +670,7 @@ const UserList = ({ apiData }) => {
 
   const dispatch = useDispatch()
   const store = useSelector(state => state.user)
-  console.log(store)
+  // console.log(store)
   useEffect(() => {
     dispatch(
       fetchData({

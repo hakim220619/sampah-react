@@ -39,6 +39,7 @@ import Icon from 'src/@core/components/icon'
 import Cleave from 'cleave.js/react'
 import 'cleave.js/dist/addons/cleave-phone.id'
 import toast from 'react-hot-toast'
+import axiosConfig from 'src/configs/axiosConfig'
 
 const Transition = forwardRef(function Transition(props, ref) {
   return <Fade ref={ref} {...props} />
@@ -63,7 +64,7 @@ const showErrors = (field, valueLen, min) => {
 
 const AddDialogUsers = props => {
   // ** States
-  const storedToken = window.localStorage.getItem(authConfig.storageTokenKeyName)
+
   const { show, toggle } = props
   const [options, setOptions] = useState()
   // const [role, setRole] = useState([])
@@ -106,30 +107,30 @@ const AddDialogUsers = props => {
   const [district, setDistrict] = useState()
   const [valuesVillage, setValVillage] = useState([])
   const [village, setVillage] = useState()
-
+  const storedToken = window.localStorage.getItem('token')
   //   console.log(role)
-  // useEffect(() => {
-  //   const storedToken = window.localStorage.getItem('token')
-  //   axios
-  //     .get('/api/role', {
-  //       headers: {
-  //         Authorization: storedToken
-  //       }
-  //     })
-  //     .then(response => response.data.data)
-  //     .then(val => setValues(val))
-  //   axios
-  //     .get('/api/province', {
-  //       headers: {
-  //         Authorization: storedToken
-  //       }
-  //     })
-  //     .then(response => response.data.data)
-  //     .then(val => setValProvince(val))
-  //   // console.log(province)
-  //   // console.log(regency)
-  //   // console.log(changeRegency)
-  // }, [])
+  useEffect(() => {
+    axiosConfig
+      .get('/getRole', {
+        headers: {
+          Accept: 'application/json',
+          Authorization: 'Bearer ' + storedToken
+        }
+      })
+      .then(response => {
+        setValues(response.data.data)
+      })
+    axiosConfig
+      .get('/getProvince', {
+        headers: {
+          Accept: 'application/json',
+          Authorization: 'Bearer ' + storedToken
+        }
+      })
+      .then(response => {
+        setValProvince(response.data.data)
+      })
+  }, [])
 
   const {
     reset,
@@ -141,40 +142,35 @@ const AddDialogUsers = props => {
     mode: 'onChange',
     resolver: yupResolver(schema)
   })
-  const onRegency = async data => {
-    axios
-      .get('/api/regency', {
-        params: {
-          data
-        },
+  // const storedToken = window.localStorage.getItem('token')
+  const onRegency = async id => {
+    axiosConfig
+      .get('/getRegency/' + id, {
         headers: {
-          Authorization: storedToken
+          Accept: 'application/json',
+          Authorization: 'Bearer ' + storedToken
         }
       })
       .then(response => response.data.data)
       .then(val => setValRegency(val))
   }
-  const onDistrict = async data => {
-    axios
-      .get('/api/district', {
-        params: {
-          data
-        },
+  const onDistrict = async id => {
+    axiosConfig
+      .get('/getDistrict/' + id, {
         headers: {
-          Authorization: storedToken
+          Accept: 'application/json',
+          Authorization: 'Bearer ' + storedToken
         }
       })
       .then(response => response.data.data)
       .then(val => setValDistrict(val))
   }
-  const onVillage = async data => {
-    axios
-      .get('/api/village', {
-        params: {
-          data
-        },
+  const onVillage = async id => {
+    axiosConfig
+      .get('/getVillage/' + id, {
         headers: {
-          Authorization: storedToken
+          Accept: 'application/json',
+          Authorization: 'Bearer ' + storedToken
         }
       })
       .then(response => response.data.data)
@@ -182,25 +178,25 @@ const AddDialogUsers = props => {
   }
 
   const onSubmit = async data => {
-    const dataAll = JSON.stringify()
     // console.log(dataAll)
-    const customConfig = {
+    const dataAll = {
       data: data,
       role: role,
       province: province,
       regency: regency,
       district: district,
-      village: village,
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: process.env.NEXT_PUBLIC_JWT_SECRET
-      }
+      village: village
     }
-    console.log(customConfig)
-    await axios
-      .post('/api/users', customConfig)
+    // console.log(data)
+    await axiosConfig
+      .post('/users-add', dataAll, {
+        headers: {
+          Accept: 'application/json',
+          Authorization: 'Bearer ' + storedToken
+        }
+      })
       .then(async response => {
-        // console.log(response)
+        console.log(response)
         dispatch(addUser({ ...data, role, province, regency, district, village }))
         reset()
         toggle()

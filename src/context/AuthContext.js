@@ -9,8 +9,7 @@ import axios from 'axios'
 
 // ** Config
 import authConfig from 'src/configs/auth'
-
-import url from 'src/configs/url'
+import axiosConfig from 'src/configs/axiosConfig'
 
 // ** Defaults
 const defaultProvider = {
@@ -37,11 +36,10 @@ const AuthProvider = ({ children }) => {
       // localStorage.removeItem('token')
       // localStorage.removeItem('accessToken')
       // console.log(storedToken)
-      const URL = await url()
       if (storedToken) {
         setLoading(true)
-        await axios
-          .get(URL + '/checkLogin', {
+        await axiosConfig
+          .get('/checkLogin', {
             headers: {
               Accept: 'application/json',
               Authorization: 'Bearer ' + storedToken
@@ -71,9 +69,8 @@ const AuthProvider = ({ children }) => {
   }, [])
 
   const handleLogin = async (params, errorCallback) => {
-    const URL = await url()
-    axios
-      .post(URL + '/login', params)
+    axiosConfig
+      .post('/login', params)
       .then(async response => {
         // console.log(response)
         params.rememberMe ? window.localStorage.setItem('token', response.data.token) : null
