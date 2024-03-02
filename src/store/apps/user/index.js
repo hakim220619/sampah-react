@@ -1,6 +1,6 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit'
 
-import axiosConfig from 'src/configs/axiosConfig'
+import axios from 'src/configs/axiosConfig'
 
 // ** Fetch Users
 export const fetchData = createAsyncThunk('appUsers/fetchData', async params => {
@@ -12,7 +12,7 @@ export const fetchData = createAsyncThunk('appUsers/fetchData', async params => 
       Authorization: 'Bearer ' + storedToken
     }
   }
-  const response = await axiosConfig.get('/users', customConfig)
+  const response = await axios.get('/users', customConfig)
   return response.data
 })
 
@@ -35,7 +35,7 @@ export const deleteUser = createAsyncThunk('appUsers/deleteUser', async (id, { g
     }
   }
   console.log(customConfig)
-  const response = await axiosConfig.delete('/users-delete/' + id, customConfig)
+  const response = await axios.delete('/users-delete/' + id, customConfig)
   dispatch(fetchData(getState().user.params))
 
   return response.data

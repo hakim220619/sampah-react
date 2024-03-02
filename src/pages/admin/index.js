@@ -40,9 +40,6 @@ import { getInitials } from 'src/@core/utils/get-initials'
 // ** Actions Imports
 import { fetchData, deleteUser, editUser } from 'src/store/apps/user'
 
-// ** Third Party Components
-import axios from 'axios'
-
 // ** Custom Table Components Imports
 import TableHeader from 'src/components/TableHeader'
 import AddUserDialog from 'src/pages/admin/AddUserDialog'
@@ -62,7 +59,7 @@ import FormHelperText from '@mui/material/FormHelperText'
 import toast from 'react-hot-toast'
 import Swal from 'sweetalert2'
 import withReactContent from 'sweetalert2-react-content'
-import axiosConfig from 'src/configs/axiosConfig'
+import axios from 'src/configs/axiosConfig'
 
 const MySwal = withReactContent(Swal)
 // ** Vars
@@ -186,7 +183,7 @@ const RowOptions = ({ id, fullName, email, role, state, phone, address, province
   // const [role, setrole] = useState()
   //   console.log(role)
 
-  console.log(defaultValues)
+  // console.log(defaultValues)
   const {
     reset,
     control,
@@ -200,7 +197,7 @@ const RowOptions = ({ id, fullName, email, role, state, phone, address, province
   })
 
   useEffect(() => {
-    axiosConfig
+    axios
       .get('/getRole', {
         headers: {
           Accept: 'application/json',
@@ -210,7 +207,7 @@ const RowOptions = ({ id, fullName, email, role, state, phone, address, province
       .then(response => {
         setValues(response.data.data)
       })
-    axiosConfig
+    axios
       .get('/getProvince', {
         headers: {
           Accept: 'application/json',
@@ -223,7 +220,7 @@ const RowOptions = ({ id, fullName, email, role, state, phone, address, province
   }, [])
 
   const onRegency = async id => {
-    axiosConfig
+    axios
       .get('/getRegency/' + id, {
         headers: {
           Accept: 'application/json',
@@ -234,7 +231,7 @@ const RowOptions = ({ id, fullName, email, role, state, phone, address, province
       .then(val => setValRegency(val))
   }
   const onDistrict = async id => {
-    axiosConfig
+    axios
       .get('/getDistrict/' + id, {
         headers: {
           Accept: 'application/json',
@@ -245,7 +242,7 @@ const RowOptions = ({ id, fullName, email, role, state, phone, address, province
       .then(val => setValDistrict(val))
   }
   const onVillage = async id => {
-    axiosConfig
+    axios
       .get('/getVillage/' + id, {
         headers: {
           Accept: 'application/json',
@@ -257,19 +254,44 @@ const RowOptions = ({ id, fullName, email, role, state, phone, address, province
   }
 
   const onSubmit = async () => {
-    const customConfig = {
-      data: { id, fullNameEd, emailEd, roleEd, stateEd, phoneEd, addressEd },
-      type: 'edit',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: process.env.NEXT_PUBLIC_JWT_SECRET
-      }
+    const dataAll = {
+      id,
+      fullNameEd,
+      emailEd,
+      roleEd,
+      stateEd,
+      phoneEd,
+      addressEd,
+      provinceED,
+      regencyED,
+      districtED,
+      villageED
     }
     await axios
-      .post('/api/users', customConfig)
+      .patch('/users-edit', dataAll, {
+        headers: {
+          Accept: 'application/json',
+          Authorization: 'Bearer ' + storedToken
+        }
+      })
       .then(async response => {
-        // console.log(response)
-        dispatch(editUser({ id, fullNameEd, emailEd, roleEd, stateEd, phoneEd, addressEd, role }))
+        console.log(response)
+        dispatch(
+          editUser({
+            id,
+            fullNameEd,
+            emailEd,
+            roleEd,
+            stateEd,
+            phoneEd,
+            addressEd,
+            role,
+            provinceED,
+            regencyED,
+            districtED,
+            villageED
+          })
+        )
         setShow(false), setAnchorEl(null), reset()
         toast.success('Successfully Updatedd!')
       })
@@ -555,6 +577,19 @@ const RowOptions = ({ id, fullName, email, role, state, phone, address, province
 const columns = [
   {
     flex: 0.2,
+    minWidth: 40,
+    field: 'no',
+    headerName: 'No',
+    renderCell: ({ row }) => {
+      return (
+        <Typography noWrap variant='body2'>
+          {row.no}
+        </Typography>
+      )
+    }
+  },
+  {
+    flex: 0.2,
     minWidth: 250,
     field: 'fullName',
     headerName: 'Full Name',
@@ -622,6 +657,58 @@ const columns = [
       return (
         <Typography noWrap variant='body2'>
           {row.phone}
+        </Typography>
+      )
+    }
+  },
+  {
+    flex: 0.2,
+    minWidth: 200,
+    field: 'province',
+    headerName: 'Province',
+    renderCell: ({ row }) => {
+      return (
+        <Typography noWrap variant='body2'>
+          {row.province}
+        </Typography>
+      )
+    }
+  },
+  {
+    flex: 0.2,
+    minWidth: 200,
+    field: 'regency',
+    headerName: 'Regency',
+    renderCell: ({ row }) => {
+      return (
+        <Typography noWrap variant='body2'>
+          {row.regency}
+        </Typography>
+      )
+    }
+  },
+  {
+    flex: 0.2,
+    minWidth: 200,
+    field: 'district',
+    headerName: 'District',
+    renderCell: ({ row }) => {
+      return (
+        <Typography noWrap variant='body2'>
+          {row.district}
+        </Typography>
+      )
+    }
+  },
+  {
+    flex: 0.2,
+    minWidth: 200,
+    field: 'village',
+    headerName: 'Village',
+    renderCell: ({ row }) => {
+      return (
+        <Typography noWrap variant='body2'>
+          {row.village}
         </Typography>
       )
     }

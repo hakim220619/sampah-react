@@ -31,7 +31,6 @@ import { yupResolver } from '@hookform/resolvers/yup'
 import { useForm, Controller } from 'react-hook-form'
 import FormHelperText from '@mui/material/FormHelperText'
 import { useDispatch, useSelector } from 'react-redux'
-import axios from 'axios'
 import { addUser } from 'src/store/apps/user'
 // ** Icon Imports
 import Icon from 'src/@core/components/icon'
@@ -39,7 +38,7 @@ import Icon from 'src/@core/components/icon'
 import Cleave from 'cleave.js/react'
 import 'cleave.js/dist/addons/cleave-phone.id'
 import toast from 'react-hot-toast'
-import axiosConfig from 'src/configs/axiosConfig'
+import axios from 'src/configs/axiosConfig'
 
 const Transition = forwardRef(function Transition(props, ref) {
   return <Fade ref={ref} {...props} />
@@ -110,7 +109,7 @@ const AddDialogUsers = props => {
   const storedToken = window.localStorage.getItem('token')
   //   console.log(role)
   useEffect(() => {
-    axiosConfig
+    axios
       .get('/getRole', {
         headers: {
           Accept: 'application/json',
@@ -120,7 +119,7 @@ const AddDialogUsers = props => {
       .then(response => {
         setValues(response.data.data)
       })
-    axiosConfig
+    axios
       .get('/getProvince', {
         headers: {
           Accept: 'application/json',
@@ -144,7 +143,7 @@ const AddDialogUsers = props => {
   })
   // const storedToken = window.localStorage.getItem('token')
   const onRegency = async id => {
-    axiosConfig
+    axios
       .get('/getRegency/' + id, {
         headers: {
           Accept: 'application/json',
@@ -155,7 +154,7 @@ const AddDialogUsers = props => {
       .then(val => setValRegency(val))
   }
   const onDistrict = async id => {
-    axiosConfig
+    axios
       .get('/getDistrict/' + id, {
         headers: {
           Accept: 'application/json',
@@ -166,7 +165,7 @@ const AddDialogUsers = props => {
       .then(val => setValDistrict(val))
   }
   const onVillage = async id => {
-    axiosConfig
+    axios
       .get('/getVillage/' + id, {
         headers: {
           Accept: 'application/json',
@@ -188,7 +187,7 @@ const AddDialogUsers = props => {
       village: village
     }
     // console.log(data)
-    await axiosConfig
+    await axios
       .post('/users-add', dataAll, {
         headers: {
           Accept: 'application/json',

@@ -1,19 +1,20 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit'
 
 // ** Axios Imports
-import axios from 'axios'
+import axios from 'src/configs/axiosConfig'
 
 // ** Fetch Wilayah
 export const fetchDataWilayah = createAsyncThunk('appWilayah/fetchData', async params => {
+  const storedToken = window.localStorage.getItem('token')
   const customConfig = {
     params,
     headers: {
-      'Content-Type': 'application/json',
-      Authorization: process.env.NEXT_PUBLIC_JWT_SECRET
+      Accept: 'application/json',
+      Authorization: 'Bearer ' + storedToken
     }
   }
   // console.log(customConfig)
-  const response = await axios.get('/api/wilayah', customConfig)
+  const response = await axios.get('/wilayah', customConfig)
   return response.data
 })
 
@@ -34,7 +35,7 @@ export const deleteWilayah = createAsyncThunk('appWilayah/deleteWilayah', async 
       Authorization: process.env.NEXT_PUBLIC_JWT_SECRET
     }
   }
-  const response = await axios.delete('/api/wilayah', customConfig)
+  const response = await axios.delete('/wilayah', customConfig)
   dispatch(fetchDataWilayah(getState().wilayah.params))
 
   return response.data
