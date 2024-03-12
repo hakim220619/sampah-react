@@ -1,5 +1,5 @@
 // ** React Imports
-import { useState, useEffect, useCallback, forwardRef } from 'react'
+import { useState, useEffect, useCallback, forwardRef, useRef } from 'react'
 
 // ** Next Imports
 import Link from 'next/link'
@@ -38,14 +38,13 @@ import CardStatisticsHorizontal from 'src/@core/components/card-statistics/card-
 import { getInitials } from 'src/@core/utils/get-initials'
 
 // ** Actions Imports
-import { fetchDataWilayah, deleteWilayah, editWilayah } from 'src/store/apps/wilayah'
+import { fetchData, deleteUser, editUser } from 'src/store/apps/user'
 
 // ** Third Party Components
-import axios from 'src/configs/axiosConfig'
 
 // ** Custom Table Components Imports
 import TableHeader from 'src/components/TableHeader'
-import AddWilayahDialog from 'src/pages/wilayah/AddWilayahDialog'
+import AddPaketsDialog from 'src/pages/paket/AddPaketDialog'
 import DialogContent from '@mui/material/DialogContent'
 import DialogActions from '@mui/material/DialogActions'
 import TextField from '@mui/material/TextField'
@@ -53,18 +52,18 @@ import FormControlLabel from '@mui/material/FormControlLabel'
 import Switch from '@mui/material/Switch'
 import Fade from '@mui/material/Fade'
 // ** Config
-
 import authConfig from 'src/configs/auth'
 
 import * as yup from 'yup'
 import { yupResolver } from '@hookform/resolvers/yup'
 import { useForm, Controller } from 'react-hook-form'
 import FormHelperText from '@mui/material/FormHelperText'
-
-import toast from 'react-hot-toast'
+import { deletePaket, editPaket, fetchDataPaket } from 'src/store/apps/paket'
 
 import Swal from 'sweetalert2'
 import withReactContent from 'sweetalert2-react-content'
+import toast from 'react-hot-toast'
+import axios from 'src/configs/axiosConfig'
 
 const MySwal = withReactContent(Swal)
 
@@ -73,8 +72,9 @@ const userRoleObj = {
   ADM: { icon: 'mdi:laptop', color: 'error.main' },
   ADW: { icon: 'mdi:cog-outline', color: 'warning.main' },
   PLG: { icon: 'mdi:pencil-outline', color: 'info.main' }
+  // maintainer: { icon: 'mdi:chart-donut', color: 'success.main' },
+  // subscriber: { icon: 'mdi:account-outline', color: 'primary.main' }
 }
-
 const showErrors = (field, valueLen, min) => {
   if (valueLen === 0) {
     return `${field} field is required`
@@ -93,6 +93,10 @@ const Transition = forwardRef(function Transition(props, ref) {
   return <Fade ref={ref} {...props} />
 })
 
+const formatCurrency = value => {
+  return value.toLocaleString('en-US', { style: 'currency', currency: 'IDR' }).replace('IDR', 'Rp. ').replace('.00', '')
+}
+
 const LinkStyled = styled(Link)(({ theme }) => ({
   fontWeight: 600,
   fontSize: '1rem',
@@ -104,20 +108,35 @@ const LinkStyled = styled(Link)(({ theme }) => ({
   }
 }))
 
-const RowOptions = ({ id, userId, name, description, state }) => {
+const RowOptions = ({ id, namePaket, price, description, state }) => {
   // ** Hooks
   const dispatch = useDispatch()
+  // console.log(fullName)
+  // ** State
 
   const [anchorEl, setAnchorEl] = useState(null)
   const [EditUserOpen, setEditUserOpen] = useState(false)
   const rowOptionsOpen = Boolean(anchorEl)
   const [show, setShow] = useState(false)
-  const [showDelete, setShowDelete] = useState(false)
-  const [nameEd, setName] = useState(name)
-  const [userIdEd, setUserId] = useState(userId)
-  const [descriptionEd, setDescription] = useState(description)
-  const [stateEd, setState] = useState(state)
+  const [namePaketEd, setnamePaketEd] = useState(namePaket)
+  const [priceEd, setPrice] = useState(price)
+  const [descriptionEd, setdescriptionEd] = useState(description)
+  const [editorLoaded, setEditorLoaded] = useState(true)
+  //   const [emailEd, setEmail] = useState(email)
+  //   const [roleEd, setRole] = useState(role)
   const storedToken = window.localStorage.getItem('token')
+  const [stateEd, setState] = useState(state)
+  //   const [phoneEd, setPhone] = useState(phone)
+  //   const [addressEd, setAddress] = useState(address)
+
+  const editorRef = useRef()
+  const { CKEditor, ClassicEditor } = editorRef.current || {}
+  useEffect(() => {
+    editorRef.current = {
+      CKEditor: require('@ckeditor/ckeditor5-react').CKEditor,
+      ClassicEditor: require('@ckeditor/ckeditor5-build-classic')
+    }
+  }, [])
 
   const handleRowOptionsClick = event => {
     setAnchorEl(event.currentTarget)
@@ -138,31 +157,36 @@ const RowOptions = ({ id, userId, name, description, state }) => {
       confirmButtonText: 'Yes, delete it!'
     }).then(result => {
       if (result.isConfirmed) {
-        dispatch(deleteWilayah(id))
+        dispatch(deletePaket(id))
         handleRowOptionsClose()
         toast.success('Successfully has been deleted.')
       }
     })
   }
-
+  // const schema = yup.object().shape({
+  //   address: yup.string().required(),
+  //   email: yup.string().email().required(),
+  //   phone: yup
+  //     .number()
+  //     .typeError('Contact Number field is required')
+  //     .min(10, obj => showErrors('Contact Number', obj.value.length, obj.min))
+  //     .required(),
+  //   fullName: yup
+  //     .string()
+  //     .min(3, obj => showErrors('First Name', obj.value.length, obj.min))
+  //     .required(),
+  //   password: yup
+  //     .string()
+  //     .min(3, obj => showErrors('Password', obj.value.length, obj.min))
+  //     .required()
+  // })
   const defaultValues = {
-    nameEd: name,
-    userIdEd: userId,
-    stateEd: state,
-    descriptionEd: description
+    namePaketEd: namePaket,
+    priceEd: price,
+    descriptionEd: description,
+    state: state
   }
-  const [valuesUsers, setValUsers] = useState([])
-
-  useEffect(() => {
-    axios
-      .get('/users-wilayah', {
-        headers: {
-          Accept: 'application/json',
-          Authorization: 'Bearer ' + storedToken
-        }
-      })
-      .then(response => setValUsers(response.data.data))
-  }, [])
+  const [values, setValues] = useState([])
 
   const {
     reset,
@@ -173,26 +197,21 @@ const RowOptions = ({ id, userId, name, description, state }) => {
   } = useForm({
     defaultValues,
     mode: 'onChange'
+    // resolver: yupResolver(schema)
   })
 
   const onSubmit = async () => {
-    const customConfig = {
-      id,
-      userIdEd,
-      nameEd,
-      descriptionEd,
-      stateEd,
-      type: 'edit'
-    }
+    // console.log(dataAll)
+    const customConfig = { id, namePaketEd, priceEd, descriptionEd, stateEd }
     await axios
-      .patch('/wilayah-edit', customConfig, {
+      .patch('/paket-edit', customConfig, {
         headers: {
           Accept: 'application/json',
           Authorization: 'Bearer ' + storedToken
         }
       })
       .then(async response => {
-        dispatch(editWilayah({ id, userIdEd, nameEd, descriptionEd, stateEd, type: 'edit' }))
+        dispatch(editPaket({ id, namePaketEd, priceEd, descriptionEd, stateEd }))
         setShow(false), setAnchorEl(null), reset()
         toast.success('Successfully Updatedd!')
       })
@@ -245,46 +264,68 @@ const RowOptions = ({ id, userId, name, description, state }) => {
               </IconButton>
               <Box sx={{ mb: 8, textAlign: 'center' }}>
                 <Typography variant='h5' sx={{ mb: 3, lineHeight: '2rem' }}>
-                  Edit Wilayah
+                  Edit Paket
                 </Typography>
               </Box>
 
               <Grid container spacing={6}>
-                <Grid item sm={12} xs={12}>
-                  <FormControl fullWidth sx={{ mb: 6 }}>
-                    <InputLabel id='users-select'>Select Users</InputLabel>
-                    <Select
-                      fullWidth
-                      value={userIdEd}
-                      id='select-users'
-                      label='Select Users'
-                      labelId='users-select'
-                      onChange={e => setUserId(e.target.value)}
-                      inputProps={{ placeholder: 'Select Users' }}
-                    >
-                      {valuesUsers.map((opts, i) => (
-                        <MenuItem key={i} value={opts.id}>
-                          {opts.fullName} - {opts.province} - {opts.regency} - {opts.district} - {opts.village}
-                        </MenuItem>
-                      ))}
-                    </Select>
-                  </FormControl>
-                </Grid>
                 <Grid item sm={6} xs={12}>
                   <FormControl fullWidth sx={{ mb: 6 }}>
                     <TextField
-                      value={nameEd}
-                      label='Name'
-                      onChange={e => setName(e.target.value)}
+                      value={namePaketEd}
+                      label='Full Name'
+                      onChange={e => setnamePaketEd(e.target.value)}
                       placeholder='John Doe'
-                      error={Boolean(errors.nameEd)}
+                      error={Boolean(errors.namePaketEd)}
                     />
+
+                    {errors.namePaketEd && (
+                      <FormHelperText sx={{ color: 'error.main' }}>{errors.namePaketEd.message}</FormHelperText>
+                    )}
                   </FormControl>
-                  {errors.nameEd && (
-                    <FormHelperText sx={{ color: 'error.main' }}>{errors.nameEd.message}</FormHelperText>
-                  )}
                 </Grid>
+
                 <Grid item sm={6} xs={12}>
+                  <FormControl fullWidth sx={{ mb: 6 }}>
+                    <TextField
+                      value={priceEd}
+                      label='Price'
+                      onChange={e => setPrice(e.target.value)}
+                      placeholder='Rp. ***'
+                      error={Boolean(errors.price)}
+                    />
+
+                    {errors.price && (
+                      <FormHelperText sx={{ color: 'error.main' }}>{errors.price.message}</FormHelperText>
+                    )}
+                  </FormControl>
+                </Grid>
+
+                <Grid item xs={12}>
+                  <FormControl fullWidth sx={{ mb: 6 }}>
+                    <>
+                      {editorLoaded ? (
+                        <CKEditor
+                          type=''
+                          name='desc'
+                          editor={ClassicEditor}
+                          data={descriptionEd}
+                          onChange={(event, editor) => {
+                            const data = editor.getData()
+                            setdescriptionEd(data)
+                          }}
+                        />
+                      ) : (
+                        <div>Editor loading</div>
+                      )}
+                    </>
+
+                    {/* {errors.description && (
+                    <FormHelperText sx={{ color: 'error.main' }}>{errors.description.message}</FormHelperText>
+                  )} */}
+                  </FormControl>
+                </Grid>
+                <Grid item sm={12} xs={12}>
                   <FormControl fullWidth sx={{ mb: 6 }}>
                     <InputLabel id='role-select'>Select State</InputLabel>
                     <Select
@@ -301,20 +342,7 @@ const RowOptions = ({ id, userId, name, description, state }) => {
                     </Select>
                   </FormControl>
                 </Grid>
-                <Grid item sm={12} xs={12}>
-                  <FormControl fullWidth sx={{ mb: 6 }}>
-                    <TextField
-                      value={descriptionEd}
-                      label='Description'
-                      onChange={e => setDescription(e.target.value)}
-                      placeholder='asd****'
-                      error={Boolean(errors.descriptionEd)}
-                    />
-                  </FormControl>
-                  {errors.descriptionEd && (
-                    <FormHelperText sx={{ color: 'error.main' }}>{errors.descriptionEd.message}</FormHelperText>
-                  )}
-                </Grid>
+
                 <Grid item xs={12}>
                   <FormControlLabel
                     control={<Switch defaultChecked />}
@@ -358,47 +386,33 @@ const RowOptions = ({ id, userId, name, description, state }) => {
 const columns = [
   {
     flex: 0.2,
-    minWidth: 40,
-    field: 'no',
-    headerName: 'No',
-    renderCell: ({ row }) => {
-      return (
-        <Typography noWrap variant='body2'>
-          {row.no}
-        </Typography>
-      )
-    }
-  },
-  {
-    flex: 0.2,
-    minWidth: 350,
-    field: 'fullName',
-    headerName: 'Full Name',
-    renderCell: ({ row }) => {
-      return (
-        <Typography noWrap variant='body2'>
-          {row.fullName}
-        </Typography>
-      )
-    }
-  },
-  {
-    flex: 0.2,
-    minWidth: 300,
-    field: 'name',
+    minWidth: 250,
+    field: 'namePaket',
     headerName: 'Name',
     renderCell: ({ row }) => {
       return (
         <Typography noWrap variant='body2'>
-          {row.name}
+          {row.namePaket}
         </Typography>
       )
     }
   },
-
+  {
+    flex: 0.2,
+    minWidth: 250,
+    field: 'price',
+    headerName: 'Price',
+    renderCell: ({ row }) => {
+      return (
+        <Typography noWrap variant='body2'>
+          {formatCurrency(row.price)}
+        </Typography>
+      )
+    }
+  },
   {
     flex: 0.1,
-    minWidth: 350,
+    minWidth: 110,
     field: 'state',
     headerName: 'Status',
     renderCell: ({ row }) => {
@@ -414,9 +428,9 @@ const columns = [
     }
   },
   {
-    flex: 0.15,
+    flex: 0.2,
+    minWidth: 250,
     field: 'description',
-    minWidth: 350,
     headerName: 'Description',
     renderCell: ({ row }) => {
       return (
@@ -426,45 +440,112 @@ const columns = [
       )
     }
   },
+  //   {
+  //     flex: 0.15,
+  //     field: 'role',
+  //     minWidth: 150,
+  //     headerName: 'Role',
+  //     renderCell: ({ row }) => {
+  //       return (
+  //         <Box sx={{ display: 'flex', alignItems: 'center', '& svg': { mr: 3, color: userRoleObj[row.role].color } }}>
+  //           <Icon icon={userRoleObj[row.role].icon} fontSize={20} />
+  //           <Typography noWrap sx={{ color: 'text.secondary', textTransform: 'capitalize' }}>
+  //             {row.role}
+  //           </Typography>
+  //         </Box>
+  //       )
+  //     }
+  //   },
+
+  //   {
+  //     flex: 0.1,
+  //     minWidth: 110,
+  //     field: 'state',
+  //     headerName: 'Status',
+  //     renderCell: ({ row }) => {
+  //       return (
+  //         <CustomChip
+  //           skin='light'
+  //           size='small'
+  //           label={row.state}
+  //           color={userStatusObj[row.state]}
+  //           sx={{ textTransform: 'capitalize', '& .MuiChip-label': { lineHeight: '18px' } }}
+  //         />
+  //       )
+  //     }
+  //   },
+  //   {
+  //     flex: 0.2,
+  //     minWidth: 250,
+  //     field: 'phone',
+  //     headerName: 'Phone',
+  //     renderCell: ({ row }) => {
+  //       return (
+  //         <Typography noWrap variant='body2'>
+  //           {row.phone}
+  //         </Typography>
+  //       )
+  //     }
+  //   },
+  //   {
+  //     flex: 0.2,
+  //     minWidth: 250,
+  //     field: 'address',
+  //     headerName: 'Address',
+  //     renderCell: ({ row }) => {
+  //       return (
+  //         <Typography noWrap variant='body2'>
+  //           {row.address}
+  //         </Typography>
+  //       )
+  //     }
+  //   },
   {
     flex: 0.1,
-    minWidth: 150,
+    minWidth: 90,
     sortable: false,
     field: 'actions',
     headerName: 'Actions',
     renderCell: ({ row }) => (
-      <RowOptions id={row.id} userId={row.userId} name={row.name} description={row.description} state={row.state} />
+      <RowOptions
+        id={row.id}
+        namePaket={row.namePaket}
+        price={row.price}
+        description={row.description}
+        state={row.state}
+      />
     )
   }
 ]
 
-const WilayahList = ({ apiData }) => {
+const PostList = ({ apiData }) => {
   const [value, setValue] = useState('')
-  const [addUserOpen, setAddUserOpen] = useState(false)
+  const [addPaketOpen, setAddPaketOpen] = useState(false)
   const [paginationModel, setPaginationModel] = useState({ page: 0, pageSize: 10 })
 
+  //   console.log(apiData)
   const dispatch = useDispatch()
-  const store = useSelector(state => state.wilayah)
+  const store = useSelector(state => state.paket)
+  // console.log(store)
   useEffect(() => {
     dispatch(
-      fetchDataWilayah({
+      fetchDataPaket({
         q: value
       })
     )
   }, [dispatch, value])
-
   const handleFilter = useCallback(val => {
     setValue(val)
   }, [])
 
-  const toggleAddWilayahDialog = () => setAddUserOpen(!addUserOpen)
+  const toggleAddUserDialog = () => setAddPaketOpen(!addPaketOpen)
 
   return (
     <Grid container spacing={6}>
       <Grid item xs={12}>
         <Card>
           <Divider />
-          <TableHeader value={value} handleFilter={handleFilter} toggle={toggleAddWilayahDialog} name='Wilayah' />
+          <TableHeader value={value} handleFilter={handleFilter} toggle={toggleAddUserDialog} name='Paket' />
           <DataGrid
             autoHeight
             rows={store.data}
@@ -478,9 +559,8 @@ const WilayahList = ({ apiData }) => {
           />
         </Card>
       </Grid>
-      <AddWilayahDialog show={addUserOpen} toggle={toggleAddWilayahDialog} />
+      <AddPaketsDialog show={addPaketOpen} toggle={toggleAddUserDialog} />
     </Grid>
   )
 }
-
-export default WilayahList
+export default PostList

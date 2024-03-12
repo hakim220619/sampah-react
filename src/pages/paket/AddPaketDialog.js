@@ -1,5 +1,5 @@
 // ** React Imports
-import { useState, forwardRef, useEffect } from 'react'
+import { useState, forwardRef, useEffect, useRef } from 'react'
 
 // ** Config
 import authConfig from 'src/configs/auth'
@@ -31,14 +31,16 @@ import { yupResolver } from '@hookform/resolvers/yup'
 import { useForm, Controller } from 'react-hook-form'
 import FormHelperText from '@mui/material/FormHelperText'
 import { useDispatch, useSelector } from 'react-redux'
-import { addWilayah } from 'src/store/apps/wilayah'
+import { addPaket } from 'src/store/apps/paket'
 // ** Icon Imports
 import Icon from 'src/@core/components/icon'
 // ** CleaveJS Imports
 import Cleave from 'cleave.js/react'
 import 'cleave.js/dist/addons/cleave-phone.id'
 
-// ** Third Party Components
+import { EditorWrapper } from 'src/@core/styles/libs/react-draft-wysiwyg'
+import CKeditorDesc from 'src/pages/paket/ckeditor/custom-editor'
+
 import toast from 'react-hot-toast'
 import axios from 'src/configs/axiosConfig'
 
@@ -63,46 +65,31 @@ const showErrors = (field, valueLen, min) => {
   }
 }
 
-const AddDialogWilayah = props => {
+const AddPaketWilayah = props => {
   // ** States
   const { show, toggle } = props
-  const [options, setOptions] = useState()
-  const storedToken = window.localStorage.getItem('token')
+  const [editorLoaded, setEditorLoaded] = useState(true)
+  const [description, setdescription] = useState('')
   const dispatch = useDispatch()
+  const storedToken = window.localStorage.getItem('token')
   const schema = yup.object().shape({
-    name: yup
+    namePaket: yup
       .string()
-      .min(3, obj => showErrors('First Name', obj.value.length, obj.min))
-      .required(),
-    description: yup
-      .string()
-      .min(3, obj => showErrors('First Name', obj.value.length, obj.min))
+      .min(3, obj => showErrors('Name Paket', obj.value.length, obj.min))
       .required()
+    // description: yup
+    //   .string()
+    //   .min(3, obj => showErrors('Description', obj.value.length, obj.min))
+    //   .required()
   })
 
   const defaultValues = {
-    name: '',
+    namePaket: '',
+    price: '',
     description: ''
   }
 
-  // const [values, setValues] = useState([])
-
-  const [role, setrole] = useState()
-  const [valuesUsers, setValUsers] = useState([])
-  const [usersId, setUsers] = useState()
-
   //   console.log(role)
-  useEffect(() => {
-    // console.log(customConfig)
-    axios
-      .get('/users-wilayah', {
-        headers: {
-          Accept: 'application/json',
-          Authorization: 'Bearer ' + storedToken
-        }
-      })
-      .then(response => setValUsers(response.data.data))
-  }, [])
 
   const {
     reset,
@@ -115,14 +102,24 @@ const AddDialogWilayah = props => {
     resolver: yupResolver(schema)
   })
 
-  const onSubmit = async data => {
-    // console.log(dataAll)
-    const dataAll = {
-      data: data,
-      usersId: usersId
+  const editorRef = useRef()
+  const { CKEditor, ClassicEditor } = editorRef.current || {}
+  useEffect(() => {
+    editorRef.current = {
+      CKEditor: require('@ckeditor/ckeditor5-react').CKEditor,
+      ClassicEditor: require('@ckeditor/ckeditor5-build-classic')
     }
+  }, [])
+
+  const onSubmit = async data => {
+    const dataAll = JSON.stringify({ data })
+    const customConfig = {
+      data: data,
+      description: description
+    }
+    // console.log(customConfig)
     await axios
-      .post('/wilayah-add', dataAll, {
+      .post('/paket-add', customConfig, {
         headers: {
           Accept: 'application/json',
           Authorization: 'Bearer ' + storedToken
@@ -130,7 +127,8 @@ const AddDialogWilayah = props => {
       })
       .then(async response => {
         // console.log(response)
-        dispatch(addWilayah({ ...data, usersId }))
+        dispatch(addPaket({ ...dataAll }))
+        setdescription('')
         reset()
         toggle()
         toast.success('Successfully Added!')
@@ -174,7 +172,7 @@ const AddDialogWilayah = props => {
             </IconButton>
             <Box sx={{ mb: 8, textAlign: 'center' }}>
               <Typography variant='h5' sx={{ mb: 3, lineHeight: '2rem' }}>
-                Add Wilayah
+                Add Paket
               </Typography>
             </Box>
 
@@ -182,62 +180,70 @@ const AddDialogWilayah = props => {
               <Grid item sm={12} xs={12}>
                 <FormControl fullWidth sx={{ mb: 6 }}>
                   <Controller
-                    name='name'
+                    name='namePaket'
                     control={control}
                     rules={{ required: true }}
                     render={({ field: { value, onChange } }) => (
                       <TextField
                         value={value}
-                        label='Nama Wilayah'
+                        label='Nama Paket'
                         onChange={onChange}
                         placeholder='Wilayah A'
-                        error={Boolean(errors.name)}
+                        error={Boolean(errors.namePaket)}
                       />
                     )}
                   />
-                  {errors.name && <FormHelperText sx={{ color: 'error.main' }}>{errors.name.message}</FormHelperText>}
+                  {errors.namePaket && (
+                    <FormHelperText sx={{ color: 'error.main' }}>{errors.namePaket.message}</FormHelperText>
+                  )}
                 </FormControl>
               </Grid>
+            </Grid>
+
+            <Grid container spacing={6}>
               <Grid item sm={12} xs={12}>
                 <FormControl fullWidth sx={{ mb: 6 }}>
-                  <InputLabel id='users-select'>Select Users</InputLabel>
-                  <Select
-                    fullWidth
-                    value={usersId}
-                    id='select-users'
-                    label='Select Users'
-                    labelId='users-select'
-                    onChange={e => setUsers(e.target.value)}
-                    inputProps={{ placeholder: 'Select Users' }}
-                  >
-                    {valuesUsers.map((opts, i) => (
-                      <MenuItem key={i} value={opts.id}>
-                        {opts.fullName} - {opts.province} - {opts.regency} - {opts.district} - {opts.village}
-                      </MenuItem>
-                    ))}
-                  </Select>
-                </FormControl>
-              </Grid>
-
-              <Grid item xs={12}>
-                <FormControl fullWidth sx={{ mb: 6 }}>
                   <Controller
-                    name='description'
+                    name='price'
                     control={control}
-                    rules={{ required: false }}
+                    rules={{ required: true }}
                     render={({ field: { value, onChange } }) => (
                       <TextField
                         value={value}
-                        label='Description'
+                        label='Price'
                         onChange={onChange}
-                        placeholder='qwerty **'
-                        error={Boolean(errors.description)}
+                        placeholder='Rp. ***'
+                        error={Boolean(errors.price)}
                       />
                     )}
                   />
-                  {errors.description && (
+                  {errors.price && <FormHelperText sx={{ color: 'error.main' }}>{errors.price.message}</FormHelperText>}
+                </FormControl>
+              </Grid>
+            </Grid>
+            <Grid container spacing={6}>
+              <Grid item xs={12}>
+                <FormControl fullWidth sx={{ mb: 6 }}>
+                  <>
+                    {editorLoaded ? (
+                      <CKEditor
+                        type=''
+                        name='desc'
+                        editor={ClassicEditor}
+                        data={description}
+                        onChange={(event, editor) => {
+                          const data = editor.getData()
+                          setdescription(data)
+                        }}
+                      />
+                    ) : (
+                      <div>Editor loading</div>
+                    )}
+                  </>
+
+                  {/* {errors.description && (
                     <FormHelperText sx={{ color: 'error.main' }}>{errors.description.message}</FormHelperText>
-                  )}
+                  )} */}
                 </FormControl>
               </Grid>
               <Grid item xs={12}>
@@ -273,4 +279,4 @@ const AddDialogWilayah = props => {
   )
 }
 
-export default AddDialogWilayah
+export default AddPaketWilayah

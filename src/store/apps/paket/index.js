@@ -1,13 +1,19 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit'
 
 // ** Axios Imports
-import axios from 'axios'
+import axios from 'src/configs/axiosConfig'
 
 // ** Fetch Paket
 export const fetchDataPaket = createAsyncThunk('appPaket/fetchData', async params => {
-  const response = await axios.get('/api/paket', {
-    params
-  })
+  const storedToken = window.localStorage.getItem('token')
+  const customConfig = {
+    params,
+    headers: {
+      Accept: 'application/json',
+      Authorization: 'Bearer ' + storedToken
+    }
+  }
+  const response = await axios.get('/paket', customConfig)
   return response.data
 })
 
@@ -21,9 +27,15 @@ export const editPaket = createAsyncThunk('appPaket/addPaket', async (data, { ge
 
 // ** Delete Paket
 export const deletePaket = createAsyncThunk('appPaket/deletePaket', async (id, { getState, dispatch }) => {
-  const response = await axios.delete('/api/paket', {
-    data: id
-  })
+  const storedToken = window.localStorage.getItem('token')
+  const customConfig = {
+    id: id,
+    headers: {
+      Accept: 'application/json',
+      Authorization: 'Bearer ' + storedToken
+    }
+  }
+  const response = await axios.delete('/paket-delete/' + id, customConfig)
   dispatch(fetchDataPaket(getState().paket.params))
 
   return response.data

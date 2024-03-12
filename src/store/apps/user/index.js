@@ -34,7 +34,6 @@ export const deleteUser = createAsyncThunk('appUsers/deleteUser', async (id, { g
       Authorization: 'Bearer ' + storedToken
     }
   }
-  console.log(customConfig)
   const response = await axios.delete('/users-delete/' + id, customConfig)
   dispatch(fetchData(getState().user.params))
 

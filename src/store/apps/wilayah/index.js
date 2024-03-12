@@ -28,14 +28,15 @@ export const editWilayah = createAsyncThunk('appWilayah/addWilayah', async (data
 
 // ** Delete Wilayah
 export const deleteWilayah = createAsyncThunk('appWilayah/deleteWilayah', async (id, { getState, dispatch }) => {
+  const storedToken = window.localStorage.getItem('token')
   const customConfig = {
-    data: id,
+    id: id,
     headers: {
-      'Content-Type': 'application/json',
-      Authorization: process.env.NEXT_PUBLIC_JWT_SECRET
+      Accept: 'application/json',
+      Authorization: 'Bearer ' + storedToken
     }
   }
-  const response = await axios.delete('/wilayah', customConfig)
+  const response = await axios.delete('/wilayah-delete/' + id, customConfig)
   dispatch(fetchDataWilayah(getState().wilayah.params))
 
   return response.data
